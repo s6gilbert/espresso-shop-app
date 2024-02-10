@@ -1,0 +1,103 @@
+NAME: review2
+LAST DEPLOYED: Sat Feb 10 14:02:05 2024
+NAMESPACE: nana
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+HOOKS:
+MANIFEST:
+---
+# Source: gilbert-espresso-web/templates/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name:  espresso-shop-reviews
+spec:
+  minAvailable: 2
+spec:
+  selector:
+    matchLabels:
+      app: espresso-shop-reviews
+---
+# Source: gilbert-espresso-web/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: espresso-shop-reviews
+  labels:
+    app: espresso-shop-reviews
+---
+# Source: gilbert-espresso-web/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: espresso-shop-reviews
+  labels:
+    app: espresso-shop-reviews
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: espresso-shop-reviews
+  template:
+    metadata:
+      labels:
+        app: espresso-shop-reviews
+        version: v2
+    spec:
+      serviceAccountName: espresso-shop-reviews
+      securityContext:
+        {}
+      containers:
+        - name: gilbert-espresso-web
+          securityContext:
+            {}
+          image: hossambarakat/espresso-shop-reviews
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVICE_VERSION
+              value: v2 
+            
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+        #livenessProbe:
+        #  httpGet:
+        #    path: /
+        #    port: http
+        #readinessProbe:
+        #  httpGet:
+        #    path: /
+        #    port: http
+          resources:
+            {}
+---
+# Source: gilbert-espresso-web/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: espresso-shop-reviews
+  labels:
+    app: espresso-shop-reviews
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: espresso-shop-reviews
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+
+NOTES:
+1. Get the application URL by running these commands:
+  export POD_NAME=$(kubectl get pods --namespace nana -l "app.kubernetes.io/name=gilbert-espresso-web,app.kubernetes.io/instance=review2" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace nana $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace nana port-forward $POD_NAME 8080:$CONTAINER_PORT
