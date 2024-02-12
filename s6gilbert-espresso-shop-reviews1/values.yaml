@@ -10,7 +10,7 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
-name: espresso-shop-reviews
+name: espresso-shop-reviews-v1
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
